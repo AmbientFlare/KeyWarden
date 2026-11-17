@@ -1,0 +1,247 @@
+<!-- templates/product_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Product Details{% endblock %}
+
+{% block page_title %}Product Details{% endblock %}
+
+{% block page_actions %}
+<a href="/products" class="btn btn-sm btn-outline-secondary me-2">
+    <span data-feather="arrow-left"></span>
+    Back to Products
+</a>
+<a href="/products/{{ product.product_id }}/edit" class="btn btn-sm btn-primary">
+    <span data-feather="edit"></span>
+    Edit Product
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Product Info -->
+<div class="row">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Product Name</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ product.name }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <span data-feather="package" class="text-gray-300"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Version</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ product.version }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <span data-feather="tag" class="text-gray-300"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Details & Licenses -->
+<div class="row">
+    <div class="col-lg-6">
+        <!-- Features Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Product Features</h6>
+            </div>
+            <div class="card-body">
+                {% if product.features %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in product.features.items() %}
+                            <tr>
+                                <td>{{ key }}</td>
+                                <td>
+                                    {% if value is mapping %}
+                                    <pre>{{ value|tojson(indent=2) }}</pre>
+                                    {% elif value is iterable and value is not string %}
+                                    <pre>{{ value|tojson }}</pre>
+                                    {% else %}
+                                    {{ value }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="mb-0 text-center">No features defined for this product.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- License Settings Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">License Settings</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%">Default Maximum Activations</th>
+                                <td>{{ product.default_max_activations }}</td>
+                            </tr>
+                            <tr>
+                                <th>License Key Format</th>
+                                <td>{{ product.license_key_format }}</td>
+                            </tr>
+                            <tr>
+                                <th>Heartbeat Interval</th>
+                                <td>{{ product.heartbeat_interval }} hours</td>
+                            </tr>
+                            <tr>
+                                <th>Auto-Deactivate After</th>
+                                <td>
+                                    {% if product.auto_deactivate_days > 0 %}
+                                    {{ product.auto_deactivate_days }} days
+                                    {% else %}
+                                    Disabled
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Hardware Fingerprinting</th>
+                                <td>
+                                    {% if product.enforce_hardware_check %}
+                                    <span class="badge bg-success">Enabled</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Disabled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/licenses/new?product_id={{ product.product_id }}" class="btn btn-primary">
+                        <span data-feather="key"></span> Create License for this Product
+                    </a>
+                    <a href="/products/{{ product.product_id }}/edit" class="btn btn-info">
+                        <span data-feather="edit"></span> Edit Product Details
+                    </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <span data-feather="trash-2"></span> Delete Product
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <!-- Licenses Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Product Licenses</h6>
+                <a href="/licenses/new?product_id={{ product.product_id }}" class="btn btn-sm btn-primary">
+                    <span data-feather="plus"></span> New License
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>License Key</th>
+                                <th>Client</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for license in product.licenses %}
+                            <tr>
+                                <td>{{ license.license_key[:8] }}...</td>
+                                <td>{{ license.client.name }}</td>
+                                <td>
+                                    {% if license.status == "active" %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% elif license.status == "expired" %}
+                                    <span class="badge bg-warning text-dark">Expired</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Revoked</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="/licenses/{{ license.license_id }}" class="btn btn-sm btn-info">
+                                        <span data-feather="eye"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not product.licenses %}
+                            <tr>
+                                <td colspan="4" class="text-center">No licenses found for this product.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the product <strong>{{ product.name }} {{ product.version }}</strong>?
+                This will also delete all licenses and activation records associated with this product.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/products/{{ product.product_id }}/delete" method="post">
+                    <button type="submit" class="btn btn-danger">Delete Product</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

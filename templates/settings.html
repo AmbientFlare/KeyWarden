@@ -1,0 +1,270 @@
+<!-- templates/settings.html -->
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<!-- Alert for successful operations -->
+{% if message %}
+<div class="alert alert-{{ message_type|default('info') }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-6">
+        <!-- Admin Account Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Admin Account</h6>
+            </div>
+            <div class="card-body">
+                <form action="/settings/admin" method="post">
+                    <div class="mb-3">
+                        <label for="admin_username" class="form-label">Admin Username</label>
+                        <input type="text" class="form-control" id="admin_username" name="admin_username"
+                            value="{{ admin_username }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                        <div class="form-text">Leave blank to keep current password.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Email Notifications</h6>
+            </div>
+            <div class="card-body">
+                <form action="/settings/email" method="post">
+                    <!-- SMTP Settings -->
+                    <h5 class="mb-3">SMTP Server Settings</h5>
+                    <div class="mb-3">
+                        <label for="smtp_server" class="form-label">SMTP Server</label>
+                        <input type="text" class="form-control" id="smtp_server" name="smtp_server"
+                            value="{{ email_settings.smtp_server if email_settings else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="smtp_port" class="form-label">SMTP Port</label>
+                        <input type="number" class="form-control" id="smtp_port" name="smtp_port"
+                            value="{{ email_settings.smtp_port if email_settings else '587' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="smtp_username" class="form-label">SMTP Username</label>
+                        <input type="text" class="form-control" id="smtp_username" name="smtp_username"
+                            value="{{ email_settings.smtp_username if email_settings else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="smtp_password" class="form-label">SMTP Password</label>
+                        <input type="password" class="form-control" id="smtp_password" name="smtp_password">
+                        <div class="form-text">Leave blank to keep current password.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sender_email" class="form-label">Sender Email</label>
+                        <input type="email" class="form-control" id="sender_email" name="sender_email"
+                            value="{{ email_settings.sender_email if email_settings else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin_email" class="form-label">Admin Email (for reports and alerts)</label>
+                        <input type="email" class="form-control" id="admin_email" name="admin_email"
+                            value="{{ email_settings.admin_email if email_settings else '' }}">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="use_tls" name="use_tls" {% if email_settings
+                            and email_settings.use_tls %}checked{% endif %}>
+                        <label class="form-check-label" for="use_tls">Use TLS</label>
+                    </div>
+
+                    <hr>
+
+                    <!-- Notification Settings -->
+                    <h5 class="mb-3">Email Notification Settings</h5>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_license_notifications"
+                            name="enable_license_notifications" {% if email_settings and
+                            email_settings.enable_license_notifications %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_license_notifications">
+                            Send license creation notifications to clients
+                        </label>
+                        <div class="form-text">Notify clients when a new license is created for them.</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_expiration_warnings"
+                            name="enable_expiration_warnings" {% if email_settings and
+                            email_settings.enable_expiration_warnings %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_expiration_warnings">
+                            Send license expiration warnings
+                        </label>
+                        <div class="form-text">Notify clients 30, 14, 7, 3, and 1 day(s) before their license expires.
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_status_notifications"
+                            name="enable_status_notifications" {% if email_settings and
+                            email_settings.enable_status_notifications %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_status_notifications">
+                            Send license status change notifications
+                        </label>
+                        <div class="form-text">Notify clients when their license status changes (e.g., revoked,
+                            reactivated).</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_unusual_activity_alerts"
+                            name="enable_unusual_activity_alerts" {% if email_settings and
+                            email_settings.enable_unusual_activity_alerts %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_unusual_activity_alerts">
+                            Send unusual activity alerts
+                        </label>
+                        <div class="form-text">Notify clients about suspicious activity like multiple activations from
+                            different locations.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email_report_frequency" class="form-label">Admin Report Frequency</label>
+                        <select class="form-select" id="email_report_frequency" name="email_report_frequency">
+                            <option value="never" {% if email_settings and
+                                email_settings.email_report_frequency=="never" %}selected{% endif %}>Never</option>
+                            <option value="daily" {% if email_settings and
+                                email_settings.email_report_frequency=="daily" %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if email_settings and
+                                email_settings.email_report_frequency=="weekly" %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if email_settings and
+                                email_settings.email_report_frequency=="monthly" %}selected{% endif %}>Monthly</option>
+                        </select>
+                        <div class="form-text">How often to send license usage reports to the admin email.</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/settings/email/test" class="btn btn-outline-secondary me-2">
+                            <span data-feather="mail"></span> Test Email
+                        </a>
+                        <button type="submit" class="btn btn-primary">Save Email Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <!-- System Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">System Settings</h6>
+            </div>
+            <div class="card-body">
+                <form action="/settings/system" method="post">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_rate_limiting"
+                            name="enable_rate_limiting" {% if system_settings and system_settings.enable_rate_limiting
+                            %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_rate_limiting">Enable Rate Limiting</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rate_limit" class="form-label">Rate Limit (requests per minute)</label>
+                        <input type="number" class="form-control" id="rate_limit" name="rate_limit"
+                            value="{{ system_settings.rate_limit if system_settings else '60' }}" min="1">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_audit_log" name="enable_audit_log" {%
+                            if system_settings and system_settings.enable_audit_log %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_audit_log">Enable Audit Logging</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="log_retention_days" class="form-label">Log Retention (days)</label>
+                        <input type="number" class="form-control" id="log_retention_days" name="log_retention_days"
+                            value="{{ system_settings.log_retention_days if system_settings else '90' }}" min="1">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_ip_geolocation"
+                            name="enable_ip_geolocation" {% if system_settings and system_settings.enable_ip_geolocation
+                            %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_ip_geolocation">Enable IP Geolocation</label>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Save System Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- System Info Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">System Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%">Server Version</th>
+                                <td>1.0.0</td>
+                            </tr>
+                            <tr>
+                                <th>Database</th>
+                                <td>PostgreSQL</td>
+                            </tr>
+                            <tr>
+                                <th>Active Licenses</th>
+                                <td>{{ active_licenses if active_licenses else '0' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Active Activations</th>
+                                <td>{{ active_activations if active_activations else '0' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Report Run</th>
+                                <td>{{ last_report_run if last_report_run else 'Never' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email Scheduler</th>
+                                <td>{{ 'Running' if email_scheduler_running else 'Stopped' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">License Settings Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <strong>Note:</strong> License settings (maximum activations, key format, heartbeat interval, etc.)
+                    are now managed at the product level. Please visit the Products section to configure
+                    license settings for each individual product.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

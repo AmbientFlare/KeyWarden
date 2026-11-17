@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+        data-bs-toggle="dropdown" aria-expanded="false">
+        Welcome, {{ username }}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <li><a class="dropdown-item" href="/settings">Settings</a></li>
+        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats cards -->
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Active Licenses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_licenses }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-key fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Activations</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_activations }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-desktop fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Expired Licenses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ expired_licenses }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Revoked Licenses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ revoked_licenses }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-ban fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Tables -->
+<div class="row">
+    <!-- Recent Licenses -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Licenses</h6>
+                <a href="/licenses" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Product</th>
+                                <th>Client</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for license in recent_licenses %}
+                            <tr>
+                                <td>{{ license.license_key }}</td>
+                                <td>{{ license.product.name }}</td>
+                                <td>{{ license.client.name }}</td>
+                                <td>
+                                    {% if license.status == "active" %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% elif license.status == "expired" %}
+                                    <span class="badge bg-warning">Expired</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Revoked</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ license.created_at.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activations -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Activations</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>License</th>
+                                <th>IP Address</th>
+                                <th>Status</th>
+                                <th>Activated</th>
+                                <th>Last Check-in</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activation in recent_activations %}
+                            <tr>
+                                <td>{{ activation.license.license_key[:8] }}...</td>
+                                <td>{{ activation.ip_address }}</td>
+                                <td>
+                                    {% if activation.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ activation.first_activated.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ activation.last_check_in.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Licenses expiring soon -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Licenses Expiring Soon</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>License Key</th>
+                                <th>Product</th>
+                                <th>Client</th>
+                                <th>Expires</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for license in expiring_soon %}
+                            <tr>
+                                <td>{{ license.license_key }}</td>
+                                <td>{{ license.product.name }}</td>
+                                <td>{{ license.client.name }}</td>
+                                <td>{{ license.expires_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <a href="/licenses/{{ license.license_id }}" class="btn btn-sm btn-info">View</a>
+                                    <a href="/licenses/{{ license.license_id }}/edit"
+                                        class="btn btn-sm btn-primary">Extend</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not expiring_soon %}
+                            <tr>
+                                <td colspan="5" class="text-center">No licenses expiring soon.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

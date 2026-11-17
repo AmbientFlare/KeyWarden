@@ -1,0 +1,245 @@
+<!-- templates/reports.html -->
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block page_actions %}
+<div class="dropdown">
+    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <span data-feather="download"></span> Export
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="/reports/export?format=csv">CSV</a></li>
+        <li><a class="dropdown-item" href="/reports/export?format=excel">Excel</a></li>
+        <li><a class="dropdown-item" href="/reports/export?format=pdf">PDF</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Report Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filter Reports</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/reports" class="row g-3" id="reportFilterForm">
+            <div class="col-md-3">
+                <label for="product_id" class="form-label">Product</label>
+                <select class="form-select" name="product_id" id="product_id">
+                    <option value="">All Products</option>
+                    {% for product in products %}
+                    <option value="{{ product.product_id }}" {% if product_id==product.product_id %}selected{% endif %}>
+                        {{ product.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="client_id" class="form-label">Client</label>
+                <select class="form-select" name="client_id" id="client_id">
+                    <option value="">All Clients</option>
+                    {% for client in clients %}
+                    <option value="{{ client.client_id }}" {% if client_id==client.client_id %}selected{% endif %}>{{
+                        client.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_range" class="form-label">Date Range</label>
+                <select class="form-select" name="date_range" id="date_range" onchange="toggleCustomDateRange()">
+                    <option value="7" {% if date_range=="7" %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if date_range=="30" or not date_range %}selected{% endif %}>Last 30 days
+                    </option>
+                    <option value="90" {% if date_range=="90" %}selected{% endif %}>Last 90 days</option>
+                    <option value="365" {% if date_range=="365" %}selected{% endif %}>Last year</option>
+                    <option value="custom" {% if date_range=="custom" %}selected{% endif %}>Custom range</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+                <a href="/reports" class="btn btn-outline-secondary ms-2">Clear</a>
+            </div>
+
+            <!-- Custom date range inputs (initially hidden) -->
+            <div class="row mt-3" id="customDateRange"
+                style="display: {% if date_range == 'custom' %}flex{% else %}none{% endif %}; width: 100%;">
+                <div class="col-md-6">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date"
+                        value="{{ start_date if start_date else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date"
+                        value="{{ end_date if end_date else '' }}">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- License Statistics -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">License Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie mb-4">
+                    <canvas id="licenseStatusChart"></canvas>
+                </div>
+                <div class="mt-4 text-center">
+                    <span class="me-3">
+                        <i class="fas fa-circle text-success"></i> Active: {{ license_stats.active if license_stats else
+                        0 }}
+                    </span>
+                    <span class="me-3">
+                        <i class="fas fa-circle text-warning"></i> Expired: {{ license_stats.expired if license_stats
+                        else 0 }}
+                    </span>
+                    <span class="me-3">
+                        <i class="fas fa-circle text-danger"></i> Revoked: {{ license_stats.revoked if license_stats
+                        else 0 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Activations Over Time</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="activationsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Usage -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Product Usage</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Total Licenses</th>
+                        <th>Active Licenses</th>
+                        <th>Total Activations</th>
+                        <th>Active Activations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in product_stats %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.total_licenses }}</td>
+                        <td>{{ product.active_licenses }}</td>
+                        <td>{{ product.total_activations }}</td>
+                        <td>{{ product.active_activations }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not product_stats %}
+                    <tr>
+                        <td colspan="5" class="text-center">No product data available for the selected filters.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Ensure the DOM is fully loaded before initializing charts
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle custom date range visibility based on selection
+        toggleCustomDateRange();
+
+        // Safely parse data from Flask, providing fallbacks for missing values
+        const licenseStats = {{ license_stats | tojson | safe
+    }} || { active: 0, expired: 0, revoked: 0 };
+    const activationHistory = {{ activation_history | tojson | safe }} || [];
+
+    // License Status Chart (Doughnut)
+    const statusCtx = document.getElementById('licenseStatusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Expired', 'Revoked'],
+            datasets: [{
+                data: [
+                    licenseStats.active || 0,
+                    licenseStats.expired || 0,
+                    licenseStats.revoked || 0
+                ],
+                backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b'],
+                hoverBackgroundColor: ['#17a673', '#dda20a', '#be2617'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                }
+            },
+            cutout: '70%',
+        },
+    });
+
+    // Activations Chart (Line)
+    const activationsCtx = document.getElementById('activationsChart').getContext('2d');
+    const activationsChart = new Chart(activationsCtx, {
+        type: 'line',
+        data: {
+            labels: activationHistory.map(item => item.date || ''),
+            datasets: [{
+                label: 'New Activations',
+                data: activationHistory.map(item => item.count || 0),
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+    });
+
+    // Function to toggle custom date range inputs
+    function toggleCustomDateRange() {
+        const dateRangeSelect = document.getElementById('date_range');
+        const customDateRange = document.getElementById('customDateRange');
+        customDateRange.style.display = dateRangeSelect.value === 'custom' ? 'flex' : 'none';
+    }
+</script>
+{% endblock %}

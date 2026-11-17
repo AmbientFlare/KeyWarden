@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Licenses{% endblock %}
+
+{% block page_title %}Licenses{% endblock %}
+
+{% block page_actions %}
+<a href="/licenses/new" class="btn btn-sm btn-primary">
+    <span data-feather="plus"></span>
+    New License
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter options -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filter Licenses</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/licenses" class="row g-3">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" name="status" id="status">
+                    <option value="">All</option>
+                    <option value="active" {% if status_filter=="active" %}selected{% endif %}>Active
+                    </option>
+                    <option value="expired" {% if status_filter=="expired" %}selected{% endif %}>Expired
+                    </option>
+                    <option value="revoked" {% if status_filter=="revoked" %}selected{% endif %}>Revoked
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="product" class="form-label">Product</label>
+                <select class="form-select" name="product" id="product">
+                    <option value="">All Products</option>
+                    <!-- Products would be populated dynamically -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="client" class="form-label">Client</label>
+                <select class="form-select" name="client" id="client">
+                    <option value="">All Clients</option>
+                    <!-- Clients would be populated dynamically -->
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="/licenses" class="btn btn-outline-secondary ms-2">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Licenses Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">All Licenses</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>License Key</th>
+                        <th>Product</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Activations</th>
+                        <th>Created</th>
+                        <th>Expires</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for license in licenses %}
+                    <tr>
+                        <td>{{ license.license_key }}</td>
+                        <td>{{ license.product.name }}</td>
+                        <td>{{ license.client.name }}</td>
+                        <td>
+                            {% if license.status == "active" %}
+                            <span class="badge bg-success">Active</span>
+                            {% elif license.status == "expired" %}
+                            <span class="badge bg-warning text-dark">Expired</span>
+                            {% else %}
+                            <span class="badge bg-danger">Revoked</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ license.activation_count }} / {{ license.max_activations }}</td>
+                        <td>{{ license.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{% if license.expires_at %}{{ license.expires_at.strftime('%Y-%m-%d') }}{%
+                            else %}Never{% endif %}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/licenses/{{ license.license_id }}" class="btn btn-sm btn-info">
+                                    <span data-feather="eye"></span>
+                                </a>
+                                <a href="/licenses/{{ license.license_id }}/edit" class="btn btn-sm btn-primary">
+                                    <span data-feather="edit"></span>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ license.license_id }}">
+                                    <span data-feather="trash-2"></span>
+                                </button>
+                            </div>
+
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal{{ license.license_id }}" tabindex="-1"
+                                aria-labelledby="deleteModalLabel{{ license.license_id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ license.license_id }}">
+                                                Confirm
+                                                Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete the license <strong>{{
+                                                license.license_key }}</strong>?
+                                            This will also delete all activation records associated with
+                                            this license.
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <form action="/licenses/{{ license.license_id }}/delete" method="post">
+                                                <button type="submit" class="btn btn-danger">Delete
+                                                    License</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not licenses %}
+                    <tr>
+                        <td colspan="8" class="text-center">No licenses found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ '?page=' ~ (page - 1) ~ '&status=' ~ status_filter }}"
+                        tabindex="-1">Previous</a>
+                </li>
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ '?page=' ~ p ~ '&status=' ~ status_filter }}">{{ p
+                        }}</a>
+                </li>
+                {% endfor %}
+
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ '?page=' ~ (page + 1) ~ '&status=' ~ status_filter }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

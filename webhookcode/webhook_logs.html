@@ -1,0 +1,116 @@
+<!-- templates/webhook_logs.html -->
+{% extends "base.html" %}
+
+{% block title %}Webhook Logs{% endblock %}
+
+{% block page_title %}Webhook Event Logs{% endblock %}
+
+{% block page_actions %}
+<a href="/webhooks" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="arrow-left"></span>
+    Back to Webhooks
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter options -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filter Events</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/webhooks/logs" class="row g-3">
+            <div class="col-md-4">
+                <label for="provider" class="form-label">Provider</label>
+                <select class="form-select" name="provider" id="provider">
+                    <option value="">All Providers</option>
+                    <option value="stripe" {% if provider_filter=="stripe" %}selected{% endif %}>Stripe</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                <a href="/webhooks/logs" class="btn btn-outline-secondary ms-2">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Webhook Events Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Webhook Events</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Event ID</th>
+                        <th>Provider</th>
+                        <th>Event Type</th>
+                        <th>Processed At</th>
+                        <th>Event Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                    <tr>
+                        <td>{{ event.event_id }}</td>
+                        <td>
+                            {% if event.provider == "stripe" %}
+                            <span class="badge bg-info">Stripe</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ event.provider }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ event.event_type }}</td>
+                        <td>{{ event.processed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#event{{ loop.index }}" aria-expanded="false">
+                                <span data-feather="info"></span> View
+                            </button>
+                            <div class="collapse mt-2" id="event{{ loop.index }}">
+                                <div class="card card-body">
+                                    <pre class="mb-0"><code>{{ event.event_data | tojson(indent=2) }}</code></pre>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not events %}
+                    <tr>
+                        <td colspan="5" class="text-center">No webhook events found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ '?page=' ~ (page - 1) ~ '&provider=' ~ provider_filter if provider_filter }}"
+                        tabindex="-1">Previous</a>
+                </li>
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link"
+                        href="{{ '?page=' ~ p ~ '&provider=' ~ provider_filter if provider_filter }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ '?page=' ~ (page + 1) ~ '&provider=' ~ provider_filter if provider_filter }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,218 @@
+<!-- templates/client_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Client Details{% endblock %}
+
+{% block page_title %}Client Details{% endblock %}
+
+{% block page_actions %}
+<a href="/clients" class="btn btn-sm btn-outline-secondary me-2">
+    <span data-feather="arrow-left"></span>
+    Back to Clients
+</a>
+<a href="/clients/{{ client.client_id }}/edit" class="btn btn-sm btn-primary">
+    <span data-feather="edit"></span>
+    Edit Client
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Existing Client Message -->
+{% if request.query_params.get('message') == 'existing_client' %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <strong>Existing Client:</strong> This client already exists in the system. No new record was created.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- Client Info -->
+<div class="row">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Client Name</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ client.name }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <span data-feather="user" class="text-gray-300"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Email</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ client.email }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <span data-feather="mail" class="text-gray-300"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client Details & Licenses -->
+<div class="row">
+    <div class="col-lg-6">
+        <!-- Client Details Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Client Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Company:</div>
+                    <div class="col-md-8">{{ client.company if client.company else '-' }}</div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Client ID:</div>
+                    <div class="col-md-8">{{ client.client_id }}</div>
+                </div>
+
+                {% if client.contact_info %}
+                <hr>
+                <h6 class="font-weight-bold">Contact Information:</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in client.contact_info.items() %}
+                            <tr>
+                                <td>{{ key }}</td>
+                                <td>
+                                    {% if value is mapping %}
+                                    <pre>{{ value|tojson(indent=2) }}</pre>
+                                    {% elif value is iterable and value is not string %}
+                                    <pre>{{ value|tojson }}</pre>
+                                    {% else %}
+                                    {{ value }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/licenses/new?client_id={{ client.client_id }}" class="btn btn-primary">
+                        <span data-feather="key"></span> Create License for this Client
+                    </a>
+                    <a href="/clients/{{ client.client_id }}/edit" class="btn btn-info">
+                        <span data-feather="edit"></span> Edit Client Details
+                    </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <span data-feather="trash-2"></span> Delete Client
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <!-- Licenses Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Client Licenses</h6>
+                <a href="/licenses/new?client_id={{ client.client_id }}" class="btn btn-sm btn-primary">
+                    <span data-feather="plus"></span> New License
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>License Key</th>
+                                <th>Product</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for license in client.licenses %}
+                            <tr>
+                                <td>{{ license.license_key[:8] }}...</td>
+                                <td>{{ license.product.name }}</td>
+                                <td>
+                                    {% if license.status == "active" %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% elif license.status == "expired" %}
+                                    <span class="badge bg-warning text-dark">Expired</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Revoked</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="/licenses/{{ license.license_id }}" class="btn btn-sm btn-info">
+                                        <span data-feather="eye"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not client.licenses %}
+                            <tr>
+                                <td colspan="4" class="text-center">No licenses found for this client.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the client <strong>{{ client.name }}</strong>?
+                This will also delete all licenses and activation records associated with this client.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/clients/{{ client.client_id }}/delete" method="post">
+                    <button type="submit" class="btn btn-danger">Delete Client</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

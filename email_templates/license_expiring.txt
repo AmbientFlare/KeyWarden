@@ -1,0 +1,20 @@
+Hello {{ client_name }},
+
+Your license key for {{ product_name }} {{ product_version }} will expire in {{ days_remaining }} days.
+
+License Details:
+---------------
+License Key: {{ license_key }}
+Expiration Date: {{ expires_date }}
+Days Remaining: {{ days_remaining }}
+
+To ensure uninterrupted service, please renew your license before the expiration date.
+
+If you would like to renew your license, please contact our sales team at [Your Contact Email/Phone].
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+Thank you for your business!
+
+---
+This is an automated message. Please do not reply to this email.

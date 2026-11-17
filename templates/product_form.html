@@ -1,0 +1,146 @@
+<!-- templates/product_form.html -->
+{% extends "base.html" %}
+
+{% block title %}{% if product %}Edit Product{% else %}New Product{% endif %}{% endblock %}
+
+{% block page_title %}{% if product %}Edit Product{% else %}New Product{% endif %}{% endblock %}
+
+{% block page_actions %}
+<a href="/products" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="arrow-left"></span>
+    Back to Products
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{% if product %}Edit Product: {{ product.name }}{% else %}Create
+            New Product{% endif %}</h6>
+    </div>
+    <div class="card-body">
+        <form action="{% if product %}/products/{{ product.product_id }}/edit{% else %}/products/new{% endif %}"
+            method="post">
+            <div class="mb-3">
+                <label for="name" class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="name" name="name"
+                    value="{{ product.name if product else '' }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="version" class="form-label">Version</label>
+                <input type="text" class="form-control" id="version" name="version"
+                    value="{{ product.version if product else '' }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="features" class="form-label">Features (JSON)</label>
+                <textarea class="form-control" id="features" name="features"
+                    rows="8">{{ product.features|tojson if product and product.features else '{}' }}</textarea>
+                <div class="form-text">Features that can be enabled/disabled in licenses. Use JSON format.</div>
+            </div>
+
+            <!-- License Settings Section -->
+            <h5 class="mt-4 mb-3">License Settings</h5>
+
+            <div class="mb-3">
+                <label for="default_max_activations" class="form-label">Default Maximum Activations</label>
+                <input type="number" class="form-control" id="default_max_activations" name="default_max_activations"
+                    value="{{ product.default_max_activations if product else '1' }}" min="1">
+                <div class="form-text">Default number of devices each license can be activated on.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="license_key_format" class="form-label">License Key Format</label>
+                <select class="form-select" id="license_key_format" name="license_key_format">
+                    <option value="XXXX-XXXX-XXXX-XXXX" {% if product and
+                        product.license_key_format=='XXXX-XXXX-XXXX-XXXX' %}selected{% endif %}>
+                        XXXX-XXXX-XXXX-XXXX</option>
+                    <option value="XXXXX-XXXXX-XXXXX" {% if product and product.license_key_format=='XXXXX-XXXXX-XXXXX'
+                        %}selected{% endif %}>
+                        XXXXX-XXXXX-XXXXX</option>
+                    <option value="XXXX-XXXX-XXXX-XXXX-XXXX" {% if product and
+                        product.license_key_format=='XXXX-XXXX-XXXX-XXXX-XXXX' %}selected{% endif %}>
+                        XXXX-XXXX-XXXX-XXXX-XXXX</option>
+                </select>
+                <div class="form-text">Format of license keys generated for this product.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="heartbeat_interval" class="form-label">Heartbeat Interval (hours)</label>
+                <input type="number" class="form-control" id="heartbeat_interval" name="heartbeat_interval"
+                    value="{{ product.heartbeat_interval if product else '24' }}" min="1">
+                <div class="form-text">How often client software should check in with the license server.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="auto_deactivate_days" class="form-label">Auto-Deactivate After (days)</label>
+                <input type="number" class="form-control" id="auto_deactivate_days" name="auto_deactivate_days"
+                    value="{{ product.auto_deactivate_days if product else '30' }}" min="0">
+                <div class="form-text">Number of days after which inactive licenses are automatically deactivated. Set
+                    to 0 to disable.</div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="enforce_hardware_check"
+                    name="enforce_hardware_check" {% if product and product.enforce_hardware_check %}checked{% endif %}>
+                <label class="form-check-label" for="enforce_hardware_check">Enforce Hardware Fingerprinting</label>
+                <div class="form-text">Require hardware validation to prevent license sharing across multiple devices.
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/products" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if product %}Update Product{% else %}Create Product{%
+                    endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if product %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+    </div>
+    <div class="card-body">
+        <div class="small text-muted">
+            Product ID: {{ product.product_id }}<br>
+            Licenses: {{ product.licenses|length if product.licenses else 0 }}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Product Features Guide</h6>
+    </div>
+    <div class="card-body">
+        <p>The features field allows you to define capabilities that can be included in licenses for this product.
+            These are stored as a JSON object and can be used to control access to different functionality in your
+            application.</p>
+
+        <h6>Example Features:</h6>
+        <pre><code>{
+  "max_users": 10,
+  "premium_support": true,
+  "export_formats": ["pdf", "excel", "csv"],
+  "modules": {
+    "analytics": true,
+    "reporting": true,
+    "automation": false
+  }
+}</code></pre>
+
+        <p>Your client application can check these values to enable or disable functionality based on the license.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

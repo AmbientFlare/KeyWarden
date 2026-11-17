@@ -1,0 +1,91 @@
+<!-- templates/client_form.html -->
+{% extends "base.html" %}
+
+{% block title %}{% if client %}Edit Client{% else %}New Client{% endif %}{% endblock %}
+
+{% block page_title %}{% if client %}Edit Client{% else %}New Client{% endif %}{% endblock %}
+
+{% block page_actions %}
+<a href="/clients" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="arrow-left"></span>
+    Back to Clients
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{% if client %}Edit Client: {{ client.name }}{% else %}Create New
+            Client{% endif %}</h6>
+    </div>
+    <div class="card-body">
+        <form action="{% if client %}/clients/{{ client.client_id }}/edit{% else %}/clients/new{% endif %}"
+            method="post">
+            <div class="mb-3">
+                <label for="name" class="form-label">Client Name</label>
+                <input type="text" class="form-control" id="name" name="name"
+                    value="{{ client.name if client else '' }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email"
+                    value="{{ client.email if client else '' }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="company" class="form-label">Company</label>
+                <input type="text" class="form-control" id="company" name="company"
+                    value="{{ client.company if client else '' }}">
+                <div class="form-text">Optional: Company or organization name</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="contact_info" class="form-label">Contact Information (JSON)</label>
+                <textarea class="form-control" id="contact_info" name="contact_info"
+                    rows="6">{{ client.contact_info|tojson if client and client.contact_info else '{}' }}</textarea>
+                <div class="form-text">Additional contact details in JSON format (phone, address, etc.)</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/clients" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">{% if client %}Update Client{% else %}Create Client{%
+                    endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if not client %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Contact Information Guide</h6>
+    </div>
+    <div class="card-body">
+        <p>The contact information field allows you to store additional details about the client in JSON format.</p>
+
+        <h6>Example Contact Information:</h6>
+        <pre><code>{
+  "phone": "+1 (555) 123-4567",
+  "alternative_email": "support@client-company.com",
+  "address": {
+    "street": "123 Main Street",
+    "city": "Boston",
+    "state": "MA",
+    "zip": "02110",
+    "country": "USA"
+  },
+  "contact_person": "John Smith",
+  "notes": "Prefers email communication"
+}</code></pre>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+<!-- templates/api_key_form.html -->
+{% extends "base.html" %}
+
+{% block title %}New API Key{% endblock %}
+
+{% block page_title %}New API Key{% endblock %}
+
+{% block page_actions %}
+<a href="/api-keys" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="arrow-left"></span>
+    Back to API Keys
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Create New API Key</h6>
+    </div>
+    <div class="card-body">
+        <form action="/api-keys/new" method="post">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <div class="form-text">A descriptive name to identify this API key (e.g., "Web Client", "Mobile App").
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">API Key Type</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="key_type" id="key_type_client" value="client" checked>
+                    <label class="form-check-label" for="key_type_client">
+                        Client Key (For software activation only)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="key_type" id="key_type_admin" value="admin">
+                    <label class="form-check-label" for="key_type_admin">
+                        Admin Key (Full administrative access)
+                    </label>
+                </div>
+                <div class="form-text">Client keys can only access license activation endpoints. Admin keys have full access to all
+                    API endpoints.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="expires_at" class="form-label">Expiration Date</label>
+                <input type="date" class="form-control" id="expires_at" name="expires_at"
+                    value="{{ default_expiration.strftime('%Y-%m-%d') }}">
+                <div class="form-text">Default is 180 days from today. You can adjust as needed.</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/api-keys" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create API Key</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if new_api_key %}
+<div class="card shadow mb-4 border-left-success">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-success">API Key Created Successfully</h6>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <strong>Important:</strong> This API key will only be shown once. Please save it now in a secure location.
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-9">
+                <input type="text" class="form-control form-control-lg" value="{{ new_api_key }}" readonly>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary btn-lg w-100" onclick="copyToClipboard('{{ new_api_key }}')">
+                    <span data-feather="copy"></span> Copy
+                </button>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <a href="/api-keys" class="btn btn-success">
+                <span data-feather="check"></span> I've Saved My API Key
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            alert('API key copied to clipboard!');
+        }, function (err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Clients{% endblock %}
+
+{% block page_title %}Clients{% endblock %}
+
+{% block page_actions %}
+<a href="/clients/new" class="btn btn-sm btn-primary">
+    <span data-feather="plus"></span>
+    New Client
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search bar -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Search Clients</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/clients" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="search" placeholder="Search by name, email or company"
+                    value="{{ search if search }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a href="/clients" class="btn btn-outline-secondary ms-2">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Clients Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">All Clients</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Company</th>
+                        <th>Active Licenses</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.client_id }}</td>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.company or '-' }}</td>
+                        <td>
+                            {% set active_count = 0 %}
+                            {% for license in client.licenses %}
+                            {% if license.status == "active" %}
+                            {% set active_count = active_count + 1 %}
+                            {% endif %}
+                            {% endfor %}
+                            {{ active_count }} / {{ client.licenses|length }}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/clients/{{ client.client_id }}" class="btn btn-sm btn-info">
+                                    <span data-feather="eye"></span>
+                                </a>
+                                <a href="/clients/{{ client.client_id }}/edit" class="btn btn-sm btn-primary">
+                                    <span data-feather="edit"></span>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ client.client_id }}">
+                                    <span data-feather="trash-2"></span>
+                                </button>
+                            </div>
+
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal{{ client.client_id }}" tabindex="-1"
+                                aria-labelledby="deleteModalLabel{{ client.client_id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ client.client_id }}">Confirm
+                                                Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete the client <strong>{{
+                                                client.name }}</strong>?
+                                            This will also delete all licenses and activation records
+                                            associated with this client.
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <form action="/clients/{{ client.client_id }}/delete" method="post">
+                                                <button type="submit" class="btn btn-danger">Delete
+                                                    Client</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not clients %}
+                    <tr>
+                        <td colspan="6" class="text-center">No clients found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ '?page=' ~ (page - 1) ~ '&search=' ~ search if search else '?page=' ~ (page - 1) }}"
+                        tabindex="-1">Previous</a>
+                </li>
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ '?page=' ~ p ~ '&search=' ~ search if search else '?page=' ~ p }}">{{
+                        p }}</a>
+                </li>
+                {% endfor %}
+
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ '?page=' ~ (page + 1) ~ '&search=' ~ search if search else '?page=' ~ (page + 1) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+</script>
+{% endblock %}

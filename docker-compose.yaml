@@ -1,0 +1,80 @@
+# docker-compose.yml
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:14
+    container_name: license_server_db
+    environment:
+      POSTGRES_DB: license_server
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and rate limiting
+  redis:
+    image: redis:alpine
+    container_name: license_server_redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    # Remove problematic sysctls
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # License API server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: license_server_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@license_server_db/license_server
+      - REDIS_URL=redis://license_server_redis:6379
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      - HOST=0.0.0.0
+    ports:
+      - "${APP_BIND:-127.0.0.1}:1776:1776"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Admin web interface
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    container_name: license_server_admin
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@license_server_db/license_server
+      - REDIS_URL=redis://license_server_redis:6379
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      - HOST=0.0.0.0
+    ports:
+      - "${APP_BIND:-127.0.0.1}:1777:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

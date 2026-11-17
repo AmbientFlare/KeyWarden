@@ -1,0 +1,209 @@
+<!-- templates/webhook_settings.html -->
+{% extends "base.html" %}
+
+{% block title %}Webhook Settings{% endblock %}
+
+{% block page_title %}Payment Webhook Settings{% endblock %}
+
+{% block page_actions %}
+<a href="/webhooks/logs" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="list"></span>
+    View Logs
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <!-- URL Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">URL Settings</h6>
+            </div>
+            <div class="card-body">
+                <form action="/webhooks/url-settings" method="post">
+                    <div class="mb-3">
+                        <label for="base_domain" class="form-label">Base Domain</label>
+                        <input type="text" class="form-control" id="base_domain" name="base_domain"
+                            value="{{ base_domain if base_domain else request.headers.get('host', 'localhost:8080') }}">
+                        <div class="form-text">
+                            The domain name to use for webhook URLs (e.g., keys.ambientflare.art)
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="use_https" name="use_https" {% if use_https
+                            %}checked{% endif %}>
+                        <label class="form-check-label" for="use_https">Use HTTPS</label>
+                        <div class="form-text">
+                            Check to generate HTTPS URLs (for use with reverse proxy)
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Save URL Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stripe Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Stripe Webhook</h6>
+            </div>
+            <div class="card-body">
+                <form action="/webhooks/stripe" method="post">
+                    <div class="mb-3">
+                        <label for="stripe_webhook_secret" class="form-label">Webhook Secret</label>
+                        <input type="text" class="form-control" id="stripe_webhook_secret" name="stripe_webhook_secret"
+                            value="{{ stripe_webhook_secret if stripe_webhook_secret else '' }}">
+                        <div class="form-text">
+                            The signing secret from Stripe for webhook signature verification.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="stripe_api_key" class="form-label">API Key</label>
+                        <input type="text" class="form-control" id="stripe_api_key" name="stripe_api_key"
+                            value="{{ stripe_api_key if stripe_api_key else '' }}">
+                        <div class="form-text">
+                            Your Stripe API key (starts with 'sk_').
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="stripe_webhook_enabled"
+                            name="stripe_webhook_enabled" {% if stripe_webhook_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="stripe_webhook_enabled">Enable Stripe Webhooks</label>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <!-- Webhook Events -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Webhook Events</h6>
+                <a href="/webhooks/logs" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Event Type</th>
+                                <th>Processed At</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in recent_events %}
+                            <tr>
+                                <td>
+                                    {% if event.provider == "stripe" %}
+                                    <span class="badge bg-info">Stripe</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ event.provider }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.event_type }}</td>
+                                <td>{{ event.processed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#event{{ loop.index }}" aria-expanded="false">
+                                        <span data-feather="info"></span>
+                                    </button>
+                                    <div class="collapse mt-2" id="event{{ loop.index }}">
+                                        <div class="card card-body">
+                                            <pre
+                                                class="mb-0"><code>{{ event.event_data | tojson(indent=2) }}</code></pre>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not recent_events %}
+                            <tr>
+                                <td colspan="4" class="text-center">No webhook events received yet.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Webhook URL Configuration -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Webhook URLs</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    Configure these URLs in your payment processor dashboard to receive webhook events.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Stripe Webhook URL</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ webhook_base_url }}/api/v1/webhooks/stripe"
+                            readonly>
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="copyToClipboard('{{ webhook_base_url }}/api/v1/webhooks/stripe')">
+                            <span data-feather="copy"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Instructions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Setup Instructions</h6>
+            </div>
+            <div class="card-body">
+                <h5>Stripe Setup</h5>
+                <ol>
+                    <li>Go to the <a href="https://dashboard.stripe.com/webhooks" target="_blank">Stripe Dashboard
+                            Webhooks</a> section.</li>
+                    <li>Click "Add endpoint" and enter your webhook URL:
+                        <code>{{ webhook_base_url }}/api/v1/webhooks/stripe</code>
+                    </li>
+                    <li>Select these events to receive:
+                        <ul>
+                            <li><code>checkout.session.completed</code></li>
+                            <li><code>invoice.payment_succeeded</code></li>
+                            <li><code>customer.subscription.created</code></li>
+                            <li><code>customer.subscription.updated</code></li>
+                            <li><code>customer.subscription.deleted</code></li>
+                        </ul>
+                    </li>
+                    <li>Copy the signing secret and paste it in the Webhook Secret field above.</li>
+                    <li>Make sure to save your settings!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            alert('URL copied to clipboard!');
+        }, function (err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

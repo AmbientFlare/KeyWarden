@@ -1,0 +1,31 @@
+Hello {{ client_name }},
+
+Your license key for {{ product_name }} {{ product_version }} has been created.
+
+License Details:
+---------------
+License Key: {{ license_key }}
+Created: {{ created_date }}
+Expires: {{ expires_date }}
+Max Activations: {{ max_activations }}
+
+{% if features %}
+Features:
+{% for key, value in features.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+
+Download Your Software:
+---------------------
+You can download {{ product_name }} {{ product_version }} from the following link:
+https://ambientflare.com/files/Tag-AI-0.0.1.msi
+
+To activate your license, enter the license key in the software when prompted.
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+Thank you for your business!
+
+---
+This is an automated message. Please do not reply to this email.

@@ -1,0 +1,114 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Server - {% block title %}Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    {% block head_extras %}{% endblock %}
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.url.path == '/' %}active{% endif %}" href="/">
+                                <span data-feather="home"></span>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/licenses' in request.url.path %}active{% endif %}"
+                                href="/licenses">
+                                <span data-feather="key"></span>
+                                Licenses
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/clients' in request.url.path %}active{% endif %}"
+                                href="/clients">
+                                <span data-feather="users"></span>
+                                Clients
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products' in request.url.path %}active{% endif %}"
+                                href="/products">
+                                <span data-feather="package"></span>
+                                Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/reports' in request.url.path %}active{% endif %}"
+                                href="/reports">
+                                <span data-feather="bar-chart-2"></span>
+                                Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/api-keys' in request.url.path %}active{% endif %}"
+                                href="/api-keys">
+                                <span data-feather="lock"></span>
+                                API Keys
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/audit-log' in request.url.path %}active{% endif %}"
+                                href="/audit-log">
+                                <span data-feather="list"></span>
+                                Audit Log
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/settings' in request.url.path %}active{% endif %}"
+                                href="/settings">
+                                <span data-feather="settings"></span>
+                                Settings
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        {% block page_actions %}{% endblock %}
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                Welcome, {{ username }}
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <li><a class="dropdown-item" href="/settings">Settings</a></li>
+                                <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script>
+        // Initialize feather icons
+        feather.replace();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

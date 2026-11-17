@@ -1,0 +1,50 @@
+<!-- templates/email_test_result.html -->
+{% extends "base.html" %}
+
+{% block title %}Email Test Result{% endblock %}
+
+{% block page_title %}Email Test Result{% endblock %}
+
+{% block page_actions %}
+<a href="/settings" class="btn btn-sm btn-outline-secondary">
+    <span data-feather="arrow-left"></span>
+    Back to Settings
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold {% if success %}text-success{% else %}text-danger{% endif %}">
+            {% if success %}Email Test Successful{% else %}Email Test Failed{% endif %}
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="alert {% if success %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+            {{ message }}
+        </div>
+
+        {% if success %}
+        <p>A test email was sent to the configured admin email address. Please check your inbox to confirm receipt.</p>
+        {% else %}
+        <p>The test email could not be sent. Please review your email settings and try again.</p>
+
+        <h5 class="mt-4">Troubleshooting Tips:</h5>
+        <ul>
+            <li>Make sure the SMTP server address is correct.</li>
+            <li>Verify that the SMTP port is open on your network (typically port 587 for TLS or 465 for SSL).</li>
+            <li>Check that your SMTP username and password are correct.</li>
+            <li>Some email providers like Gmail may require you to enable "Less secure apps" or create an app-specific
+                password.</li>
+            <li>Ensure the sender email address is valid and allowed to send from your SMTP server.</li>
+            <li>Verify that the admin email address is set correctly.</li>
+        </ul>
+        {% endif %}
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <a href="/settings" class="btn btn-outline-secondary me-2">Return to Settings</a>
+            <a href="/settings/email/test" class="btn btn-primary">Try Again</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

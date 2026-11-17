@@ -1,0 +1,172 @@
+<!-- templates/products.html -->
+{% extends "base.html" %}
+
+{% block title %}Products{% endblock %}
+
+{% block page_title %}Products{% endblock %}
+
+{% block page_actions %}
+<a href="/products/new" class="btn btn-sm btn-primary">
+    <span data-feather="plus"></span>
+    New Product
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Products Cards -->
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">{{ product.name }}</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink{{ product.product_id }}"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <span data-feather="more-vertical"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end"
+                        aria-labelledby="dropdownMenuLink{{ product.product_id }}">
+                        <li><a class="dropdown-item" href="/products/{{ product.product_id }}">View</a>
+                        </li>
+                        <li><a class="dropdown-item" href="/products/{{ product.product_id }}/edit">Edit</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ product.product_id }}">Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Version:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        {{ product.version }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Total Licenses:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        {{ product.licenses|length }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Active Licenses:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        {% set active_count = 0 %}
+                        {% for license in product.licenses %}
+                        {% if license.status == "active" %}
+                        {% set active_count = active_count + 1 %}
+                        {% endif %}
+                        {% endfor %}
+                        {{ active_count }}
+                    </div>
+                </div>
+
+                {% if product.features %}
+                <hr>
+                <h6>Features:</h6>
+                <ul>
+                    {% for feature_key, feature_value in product.features.items() %}
+                    <li><strong>{{ feature_key }}</strong>: {{ feature_value }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="/products/{{ product.product_id }}" class="btn btn-info btn-sm">
+                    <span data-feather="eye"></span> Details
+                </a>
+                <a href="/licenses/new?product_id={{ product.product_id }}" class="btn btn-primary btn-sm">
+                    <span data-feather="key"></span> New License
+                </a>
+            </div>
+        </div>
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal{{ product.product_id }}" tabindex="-1"
+            aria-labelledby="deleteModalLabel{{ product.product_id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel{{ product.product_id }}">Confirm
+                            Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete the product <strong>{{ product.name }} {{
+                            product.version }}</strong>?
+                        This will also delete all licenses and activation records associated with this
+                        product.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="/products/{{ product.product_id }}/delete" method="post">
+                            <button type="submit" class="btn btn-danger">Delete Product</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- No Products Message -->
+{% if not products %}
+<div class="alert alert-info">
+    <p class="mb-0">No products found. Click "New Product" to create your first product.</p>
+</div>
+{% endif %}
+
+<!-- New Product Button (if no products exist) -->
+{% if not products %}
+<div class="text-center mt-4">
+    <a href="/products/new" class="btn btn-primary">
+        <span data-feather="plus"></span> Create New Product
+    </a>
+</div>
+{% endif %}
+
+<!-- Product Creation Guide Card -->
+<div class="card shadow mt-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Product Management Guide</h6>
+    </div>
+    <div class="card-body">
+        <p>Products represent the software applications that you want to license. Each product can have multiple license
+            keys associated with it.</p>
+
+        <h5>Key Product Features:</h5>
+        <ul>
+            <li><strong>Name and Version:</strong> Identify your products clearly</li>
+            <li><strong>Feature Flags:</strong> Define features that can be enabled or disabled per license</li>
+            <li><strong>License Management:</strong> Create and track licenses for each product</li>
+            <li><strong>Usage Analytics:</strong> Monitor how your products are being used</li>
+        </ul>
+
+        <h5>Best Practices:</h5>
+        <ul>
+            <li>Create separate products for major versions that require different licensing</li>
+            <li>Use feature flags to implement tiered licensing (e.g., "basic", "pro", "enterprise")</li>
+            <li>Define any usage limits in the product's feature configuration</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize feather icons
+    feather.replace();
+
+    // Additional product-specific scripts could go here
+</script>
+{% endblock %}
